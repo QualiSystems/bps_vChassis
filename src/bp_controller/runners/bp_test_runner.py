@@ -112,9 +112,6 @@ class BPTestRunner(BPRunner):
             self.logger.debug('Associating interface {}'.format(bp_interface))
             if bp_interface in cs_reserved_ports:
                 reservation_order.append(cs_reserved_ports[bp_interface])
-            else:
-                raise BPRunnerException(self.__class__.__name__,
-                                        'Cannot find Port with Logical name {} in the reservation'.format(bp_interface))
 
         # reserving ports in certain order
         self._group_id = self.reservation_info.reserve(self.context.reservation.reservation_id, reservation_order)

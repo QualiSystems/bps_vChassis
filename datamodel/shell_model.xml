@@ -1,13 +1,20 @@
 <Shell>
     <ShellAttributes>
+        <AttributeInfo Name="License Server" Type="String" DefaultValue="" IsReadOnly="false" IsCommand="false">
+            <Rules>
+                <Rule Name="Configuration"/>
+            </Rules>
+        </AttributeInfo>
     </ShellAttributes>
     <ShellModel Family="Virtual Traffic Generator Chassis">
         <ResourceModel Name="Ixia Breaking Point Chassis" Description="" SupportsConcurrentCommands="false">
             <AttachedAttributes>
+                <AttachedAttribute Name="License Server" IsOverridable="true" IsLocal="true">
+                    <AllowedValues/>
+                </AttachedAttribute>
             </AttachedAttributes>
             <AttributeValues>
-                <AttributeValue Name="User" Value=""/>
-                <AttributeValue Name="Password" Value=""/>
+                <AttributeValue Name="License Server" Value=""/>
             </AttributeValues>
             <ParentModels/>
             <Drivers>

@@ -30,9 +30,8 @@ class ReservationInfo(object):
             if port not in self._reserved_ports:
                 self._reserved_ports[port] = reservation_id
             elif self._reserved_ports[port] != reservation_id:
-                raise PortReservationException(self.__class__.__name__, 'Port {0} has been reserved by {1}'.format(port,
-                                                                                                                   self._reserved_ports[
-                                                                                                                       port]))
+                raise PortReservationException(self.__class__.__name__,
+                                               'Port {0} has been reserved by {1}'.format(port, self._reserved_ports[port]))
 
     def _unreserve_group(self, reservation_id):
         for group_id, res_id in self._groups.iteritems():
