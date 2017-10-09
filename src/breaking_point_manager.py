@@ -1,18 +1,19 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import json
-import sys
+import requests
+import ssl
+
 from retrying import retry
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.poolmanager import PoolManager
+from requests_manager import get_assign_slot_request
+requests.packages.urllib3.disable_warnings()
+
 
 RETRY_SECOND = 1000
 RETRY_MINUTE = RETRY_SECOND * 60
-
-import requests
-
-from requests_manager import get_assign_slot_request
-
-requests.packages.urllib3.disable_warnings()
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.poolmanager import PoolManager
-import ssl
 
 
 class MyAdapter(HTTPAdapter):
@@ -39,16 +40,19 @@ def pretty_print_requests(req):
     print '\n\n'
 
 
-class BPS:
+class BPS(object):
     def __init__(self, ip_string, username, password):
+        self._cli = None
         self.ip_string = ip_string
         self.username = username
         self.password = password
         self.session = requests.Session()
         self.session.mount('https://', MyAdapter())
 
-    @retry(stop_max_delay=RETRY_MINUTE * 5, wait_fixed=RETRY_SECOND * 15)
-    def login(self, enable_request_prints=False):
+    @retry(stop_max_delay=RETRY_MINUTE * 10, wait_fixed=RETRY_SECOND * 60)
+    def login_rest(self, enable_request_prints=False):
+        """ """
+
         service = 'https://' + self.ip_string + '/api/v1/auth/session'
         headers = {'content-type': 'application/json'}
         data = json.dumps({'username': self.username, 'password': self.password})
@@ -60,8 +64,13 @@ class BPS:
         else:
             raise Exception('{0}: Failed to logon chassis {1}:\n{2}'.format(r.status_code, self.ip_string, r.content))
 
+    def logout_rest(self):
+        self.session = None
+
     @retry(stop_max_delay=RETRY_MINUTE * 5, wait_fixed=RETRY_SECOND * 15)
     def assign_slots(self, host, vm_name, slot_id, number_of_test_nics, enable_request_prints=False):
+        """ """
+
         request = get_assign_slot_request(host, vm_name, slot_id, number_of_test_nics)
         service = 'https://' + self.ip_string + '/api/v1/admin/vmdeployment/controller/assignSlotsToController'
         headers = {'content-type': 'application/json'}

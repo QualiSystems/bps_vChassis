@@ -1,7 +1,7 @@
 shell:
     name: ixia-breakingpoint-vchassis
-    author: Anonymous
+    author: Quali
     email: info@quali.com
-    description: Describe the purpose of your CloudShell shell
+    description: IXIA Breaking Point Virtual Chassis Shell
     version: 0.1.0
     driver_name: IxiaBreakingpointVchassisDriver
