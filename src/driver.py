@@ -4,6 +4,8 @@
 import cPickle
 import json
 
+from cloudshell.devices.driver_helper import get_logger_with_thread_id
+
 from bp_controller.runners.bp_runner_pool import BPRunnersPool
 from bp_controller.runners.bp_configuration_runner import BreakingPointConfigurationRunner
 from breaking_point_manager import BPS
@@ -12,7 +14,6 @@ from cloudshell.shell.core.driver_context import InitCommandContext, ResourceCom
 from cloudshell.shell.core.driver_context import AutoLoadDetails
 from cloudshell.shell.core.resource_driver_interface import ResourceDriverInterface
 from cloudshell.devices.driver_helper import get_cli
-
 
 ASSOCIATED_MODELS = ["Ixia BreakingPoint Module"]
 ATTR_NUMBER_OF_PORTS = "Number of Ports"
@@ -49,22 +50,30 @@ class IxiaBreakingpointVchassisDriver(ResourceDriverInterface):
         #  which only includes such resources
         # chassis will become associated with vBlades that were deployed but not preexisting
 
+        logger = get_logger_with_thread_id(context)
+        logger.info("Connect configure_device_command started")
+
         resources = cPickle.loads(resource_cache)
 
         if "License Server" not in context.resource.attributes:
             raise Exception("Missing attribute 'License Server' on {0}".format(context.resource.name))
         if context.resource.attributes["License Server"] == "":
-            raise Exception("Must configure public IP of Breaking Point license server on {0}".format(context.resource.name))
+            raise Exception(
+                "Must configure public IP of Breaking Point license server on {0}".format(context.resource.name))
 
         ip = context.resource.address
         username = context.resource.attributes["User"]
         api = self._get_api_from_context(context)
         password = api.DecryptPassword(context.resource.attributes["Password"]).Value
 
+        logger.info("IP: {}, Login: {}, Password: {}".format(ip, username, password))
+
         bps = BPS(ip, username, password)
         bps.login_rest()
 
         free_slots = list(range(1, FREE_SLOTS_COUNT))
+
+        logger.info("FREE SLOTS: {}".format(free_slots))
 
         vblades = []
         slot_id = 0
@@ -72,6 +81,8 @@ class IxiaBreakingpointVchassisDriver(ResourceDriverInterface):
         # first get all vblades and check who is already assigned to a slot;
         # this will give priority to assigning vblade to slot above arbitrarily assigning a slot
         for deployed_app in resources.values():
+
+            logger.info("Deployed App Resource Name : {}".format(deployed_app.ResourceModelName))
 
             if deployed_app.ResourceModelName not in ASSOCIATED_MODELS:
                 continue
@@ -85,13 +96,14 @@ class IxiaBreakingpointVchassisDriver(ResourceDriverInterface):
             if chassis_name == self.app_request["name"]:
                 vblade_res = api.GetResourceDetails(deployed_app.Name)
                 requested_slot = (int(attr.Value) for attr in vblade_res.ResourceAttributes if
-                              attr.Name == "Slot Id").next()
+                                  attr.Name == "Slot Id").next()
                 if requested_slot != 0 and requested_slot in free_slots:
                     slot_id = self._user_assign_slot(free_slots, requested_slot)
                     vblade_res.slot_id = slot_id
                 vblades.append(vblade_res)
 
         # ok, now we can assign vblades to slot, and assign addresses to ports
+        logger.info("VBlades info: {}".format(vblades))
         for vblade in vblades:
             number_of_ports = (attr.Value for attr in vblade.ResourceAttributes
                                if attr.Name == ATTR_NUMBER_OF_PORTS).next()
@@ -100,7 +112,7 @@ class IxiaBreakingpointVchassisDriver(ResourceDriverInterface):
                 slot_id = self._automatic_assign_port(api, free_slots, vblade_res)
             else:
                 slot_id = vblade.slot_id
-
+            logger.info("Assign Slot {}".format(slot_id))
             bps.assign_slots(host=vblade.Address,
                              vm_name=vblade.Name,
                              slot_id=str(slot_id),
@@ -115,9 +127,20 @@ class IxiaBreakingpointVchassisDriver(ResourceDriverInterface):
         self._add_license_server(ip_address=ip,
                                  username=username,
                                  password=password,
-                                 license_server_address=context.resource.attributes["License Server"])
+                                 license_server_address=context.resource.attributes["License Server"],
+                                 logger=logger)
 
-    def _add_license_server(self, ip_address, username, password, license_server_address):
+        strike_pack_url = context.resource.attributes["Strike Pack URL"]
+
+        if strike_pack_url:
+            logger.info("Strike pack installation")
+            self._install_strike_pack(ip_address=ip,
+                                      username=username,
+                                      password=password,
+                                      strike_pack_url=strike_pack_url,
+                                      logger=logger)
+
+    def _add_license_server(self, ip_address, username, password, license_server_address, logger):
         """ Add License Server to Virtual Chassis """
 
         self._cli = get_cli(SSH_SESSION_POOL)
@@ -125,8 +148,25 @@ class IxiaBreakingpointVchassisDriver(ResourceDriverInterface):
         configuration_operations = BreakingPointConfigurationRunner(cli=self._cli,
                                                                     resource_address=ip_address,
                                                                     username=username,
-                                                                    password=password)
+                                                                    password=password,
+                                                                    logger=logger)
         configuration_operations.configure_license_server(license_server_address=license_server_address)
+
+    def _install_strike_pack(self, ip_address, username, password, strike_pack_url, logger):
+        """ Install Strike pack """
+
+        logger.info("Try get cli session")
+        if not self._cli:
+            self._cli = get_cli(SSH_SESSION_POOL)
+
+        logger.info("CLI Session obtained successfully")
+
+        configuration_operations = BreakingPointConfigurationRunner(cli=self._cli,
+                                                                    resource_address=ip_address,
+                                                                    username=username,
+                                                                    password=password,
+                                                                    logger=logger)
+        configuration_operations.install_strike_pack(strike_pack_url=strike_pack_url)
 
     def _user_assign_slot(self, free_slots, requested_slot):
         free_slots.remove(requested_slot)

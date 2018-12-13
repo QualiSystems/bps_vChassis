@@ -4,8 +4,7 @@ from os.path import basename
 
 class TestConfigurationActions(object):
     def __init__(self, rest_service, logger):
-        """
-        Reboot actions
+        """ Reboot actions
         :param rest_service:
         :type rest_service: RestJsonClient
         :param logger:
@@ -16,8 +15,7 @@ class TestConfigurationActions(object):
         self._logger = logger
 
     def import_test(self, test_file_path):
-        """
-        Upload test file to the BP controller
+        """ Upload test file to the BP controller
         :param test_name:
         :type test_name: str
         :param test_file:
@@ -39,7 +37,6 @@ class TestConfigurationActions(object):
         data = self._rest_service.request_get(uri)
         result = data
         return result
-
 
     def reserve_port(self, slot, port_list):
         self._logger.debug('Reserving ports {0} on slot {1}'.format(port_list, slot))
