@@ -66,14 +66,10 @@ class IxiaBreakingpointVchassisDriver(ResourceDriverInterface):
         api = self._get_api_from_context(context)
         password = api.DecryptPassword(context.resource.attributes["Password"]).Value
 
-        logger.info("IP: {}, Login: {}, Password: {}".format(ip, username, password))
-
         bps = BPS(ip, username, password)
         bps.login_rest()
 
         free_slots = list(range(1, FREE_SLOTS_COUNT))
-
-        logger.info("FREE SLOTS: {}".format(free_slots))
 
         vblades = []
         slot_id = 0
@@ -155,11 +151,8 @@ class IxiaBreakingpointVchassisDriver(ResourceDriverInterface):
     def _install_strike_pack(self, ip_address, username, password, strike_pack_url, logger):
         """ Install Strike pack """
 
-        logger.info("Try get cli session")
         if not self._cli:
             self._cli = get_cli(SSH_SESSION_POOL)
-
-        logger.info("CLI Session obtained successfully")
 
         configuration_operations = BreakingPointConfigurationRunner(cli=self._cli,
                                                                     resource_address=ip_address,
