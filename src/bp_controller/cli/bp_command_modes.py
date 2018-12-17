@@ -41,7 +41,7 @@ class DefaultCommandMode(CommandMode):
 
 
 class ConfigCommandMode(CommandMode):
-    PROMPT = r"%\s*$"
+    PROMPT = r"%\s+$"
     ENTER_COMMAND = "bpsh"
     EXIT_COMMAND = "exit"
 

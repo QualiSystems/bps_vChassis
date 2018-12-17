@@ -16,4 +16,4 @@ class BreakingPointConfigLicenseServerFlow(object):
             configure_actions = ConfigLicenseServerActions(config_session)
 
             configure_actions.add_license_server(license_server_address=license_server_address)
-            configure_actions.delete_license_server(license_server_address="localhost")
+            # configure_actions.delete_license_server(license_server_address="localhost")

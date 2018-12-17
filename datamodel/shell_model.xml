@@ -5,6 +5,11 @@
                 <Rule Name="Configuration"/>
             </Rules>
         </AttributeInfo>
+        <AttributeInfo Name="Strike Pack URL" Type="String" DefaultValue="" IsReadOnly="false" IsCommand="false">
+            <Rules>
+                <Rule Name="Configuration"/>
+            </Rules>
+        </AttributeInfo>
     </ShellAttributes>
     <ShellModel Family="Virtual Traffic Generator Chassis">
         <ResourceModel Name="Ixia Breaking Point Chassis" Description="" SupportsConcurrentCommands="false">
@@ -12,9 +17,13 @@
                 <AttachedAttribute Name="License Server" IsOverridable="true" IsLocal="true">
                     <AllowedValues/>
                 </AttachedAttribute>
+                <AttachedAttribute Name="Strike Pack URL" IsOverridable="true" IsLocal="true">
+                    <AllowedValues/>
+                </AttachedAttribute>
             </AttachedAttributes>
             <AttributeValues>
                 <AttributeValue Name="License Server" Value=""/>
+                <AttributeValue Name="Strike Pack URL" Value=""/>
             </AttributeValues>
             <ParentModels/>
             <Drivers>
